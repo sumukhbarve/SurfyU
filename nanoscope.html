@@ -1,0 +1,60 @@
+<head>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Square-n.svg/45px-Square-n.svg.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NanoScope</title>
+</head>
+
+<body>
+    <header>
+        <span class="floatRight">{{> loginButtons align="right"}}</span>
+        <h2 class="noMargin">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Square-n.svg/45px-Square-n.svg.png">
+            <span class="">NanoScope</span>
+        </h2>
+        <small>
+            NanoScope is a social news aggregator. Users submit links and vote on them.
+            The popular links bubble to the top; the rest just fade away.
+            NanoScope is open source, available under <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+        </small>
+    </header>
+    <br>
+    {{#if currentUser}}
+        <form id="newPost" class="pure-form pure-form-stacked">
+            Submit a new link:
+            <input name="title" placeholder="Title" class="pure-input-1" required>
+            <input name="url" placeholder="URL" class="pure-input-1" required>
+            <button class="pure-button small">Submit!</button>
+        </form>
+    {{else}}
+        Sign in to submit a new link.
+    {{/if}}
+    <br><br>
+    <table class="pure-table pure-table-horizontal pure-table-striped fullWidth">
+        <tbody>
+            {{#each posts}}
+                {{> post}}
+            {{/each}}
+        </tbody>
+    </table>
+    <br>
+    <footer class="small gray centerText">
+        <hr>
+        &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
+        NanoScope is available under <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+    </footer>
+</body>
+
+<template name="post">
+    <tr>
+        <td>
+            <button id="downvote" class="pure-button{{#if hasDownvoted}} voted{{/if}}">&or;</button>
+            {{netscore}}
+            <button id="upvote" class="pure-button{{#if hasUpvoted}} voted{{/if}}">&and;</button>
+        </td>
+        <td>
+            <h3 class="inline noMargin"><a href="{{url}}">{{title}}</a></h3>
+            <small>{{domain}}</small><br>
+            <small>Submitted by {{authorname}}, {{fromNow}}.</small>
+        </td>
+    </tr>
+</template>
