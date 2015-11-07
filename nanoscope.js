@@ -1,13 +1,15 @@
 //////////////////////////////////////////////////////////////////
-// NanoScope: A simple social news aggregator.                  //
+// nanoscope: A simple social news aggregator.                  //
 // Copyright (C) 2015 CrispQ Information Technologies Pvt. Ltd. //
 // Created by Sumukh Barve.                                     //
 //////////////////////////////////////////////////////////////////
 //
 // CONSTANTS:
 //
-UP = "UP";
-DOWN = "DOWN";
+var UP = "UP"; // Note: Un-`var` if using multiple files.
+var DOWN = "DOWN";
+var EPOCH = new Date("2005-12-08");
+var ADMIN_NAMES = ["yoda"]; // HARD-CODED
 //
 // COLLECTION(S):
 //
@@ -15,11 +17,18 @@ Posts = new Mongo.Collection("posts"); // post:: title, url, authorname, created
 //
 // UTIL FUNCTIONS:
 //
+var assert = function (bool, errorMsg, alertMsg) {
+    errorMsg = errorMsg || "assertion-failed";
+    if (!bool) {
+        if (alertMsg && Meteor.isClient) {
+            alert(alertMsg);
+        }
+        throw new Meteor.Error(errMsg);
+    }
+    return true;
+};
 var assertLogin = function () {
-    if (!Meteor.userId()) {
-        alert("Please login.");
-        throw new Meteor.Error("not-authorized");
-    }    
+    assert(Meteor.userId(), "not-authorized", "Please login.");
 };
 var log = function (x, base) {
     base = base || Math.E;
@@ -29,7 +38,7 @@ var log10 = function (x) {
     return log(x, 10);
 };
 var getHotscore = function (upvoters, downvoters, createdAt) {
-    var t = createdAt - new Date("2005-12-08"),
+    var t = createdAt - EPOCH,
         x = upvoters.length - downvoters.length,
         y = (x === 0) ? 0 : (x < 0 ? -1 : +1),
         absX = Math.abs(x),
@@ -39,15 +48,39 @@ var getHotscore = function (upvoters, downvoters, createdAt) {
 var arrContains = function (arr, elm) {
     return arr.indexOf(elm) !== -1;
 };
+var isAdmin = function () {
+    var user = Meteor.user();
+    if (!user) { return false; }
+    return arrContains(ADMIN_NAMES, user.username);
+};
+var assertAdmin = function () {
+    assert(isAdmin(), "admin-required");
+};
+var isAlias = function (user) {
+    return Object.keys(user.services).length === 0;
+};
+var assertAlias = function (user) {
+    assert(isAlias(user), "bad-alias");
+};
 var arrShallowCopy = function (arr) {
     return arr.map(function (x) {return x;});
+};
+var arrRemoveElement = function (arr, elm, count) {
+    count = count || arr.length;
+    var i = null;
+    while (count > 0) {
+        i = arr.indexOf(elm);
+        if (i === -1) { break; }
+        arr.splice(i, 1);
+        count -= 1;
+    }
 };
 if (Meteor.isServer) {
     //
     // PUBLICATION(S):
     //
     Meteor.publish("posts", function () {
-        return Posts.find();
+        return Posts.find({});
     });
 }
 if (Meteor.isClient) {
@@ -61,7 +94,8 @@ if (Meteor.isClient) {
     Template.body.helpers({
         posts: function () {
             return Posts.find({}, {sort: {hotscore: -1}});
-        }//,
+        },
+        currentUserIsAdmin: isAdmin//,
     });
     Template.post.helpers({
         netscore: function () {
@@ -88,12 +122,21 @@ if (Meteor.isClient) {
     // EVENTS:
     //
     Template.body.events({
-        "submit #newPost": function (evt) {
+        "submit #addPost": function (evt) {
             evt.preventDefault();
             assertLogin(); // Error thrower;
             var title = evt.target.title.value,
-                url = evt.target.url.value;
-            Meteor.call("newPost", title, url, function (error, result) {
+                url = evt.target.url.value,
+                aliasname = "";
+            if (isAdmin()) {
+                aliasname = evt.target.aliasname.value || "";   
+            }
+            Meteor.call("addPost", title, url, aliasname, function (error, result) {
+                if (error) {
+                    console.log(error);
+                    alert("Error: " + error.message);
+                    throw error;
+                }
                 evt.target.title.value = "";
                 evt.target.url.value = "";
                 alert("Great! Your links has been added.\n" +
@@ -120,17 +163,32 @@ if (Meteor.isClient) {
 // METHODS:
 //
 Meteor.methods({
-    newPost: function (title, url) {
-        assertLogin();
+    addPost: function (title, url, aliasname) {
+        assertLogin(); // Error thrower
         var now = new Date(),
-            post = Posts.findOne({url: url});
+            post = Posts.findOne({url: url}),
+            author = Meteor.user(),
+            authorname = author.username,
+            alias = null;
         if (post) {
             throw new Meteor.Error("url-exists");   
+        }
+        if (aliasname) {
+            assertAdmin(); // Error thrower
+            alias = Meteor.users.findOne({username: aliasname});
+            if (!alias) {
+                // ==> Account doesn't exist... create one:
+                Accounts.createUser({username: aliasname});
+            } else {
+                assertAlias(alias); // Error thrower
+                // Ensures that `alias` is indeed an alias.
+            }
+            authorname = aliasname;
         }
         Posts.insert({
             title: title,
             url: url,
-            authorname: Meteor.user().username,
+            authorname: authorname,
             createdAt: now,
             upvoters: [],
             downvoters: [],
@@ -139,7 +197,8 @@ Meteor.methods({
     },
     vote: function (direction, postId) {
         assertLogin(); // Error thrower
-        var votername = Meteor.user().username,
+        var voter = Meteor.user(),
+            votername = voter.username,
             post = Posts.findOne({_id: postId}),
             provoters = null, antivoters = null;
             i = null;
@@ -151,13 +210,16 @@ Meteor.methods({
             antivoters = post.upvoters;     // alias
         }
         if (arrContains(provoters, votername)) {
-            throw new Meteor.Error("already-provoted");
+            // Undo previous vote:
+            arrRemoveElement(provoters, votername, 1);
+        } else if (arrContains(antivoters, votername)) {
+            // Change vote:
+            arrRemoveElement(antivoters, votername, 1);
+            provoters.push(votername);
+        } else {
+            // Fresh vote:
+            provoters.push(votername);
         }
-        if (arrContains(antivoters, votername)) {
-            i = antivoters.indexOf(votername);
-            antivoters.splice(i, 1);
-        }
-        provoters.push(votername);
         Posts.update(
             {_id: postId},
             {$set: {
@@ -170,5 +232,5 @@ Meteor.methods({
                 )//,
             }}//,
         );
-    }//,
+    },
 });

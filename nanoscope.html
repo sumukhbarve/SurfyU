@@ -1,59 +1,74 @@
 <head>
-    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Square-n.svg/45px-Square-n.svg.png">
+    <link rel="icon" href="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>NanoScope</title>
+    <title>Nanoscope</title>
 </head>
 
-<body>
+<body class="container">
     <header>
-        <span class="floatRight">{{> loginButtons align="right"}}</span>
+        <span class="pull-right">
+            <span class="small gray">{{#if currentUserIsAdmin}}(ADMIN){{/if}} &nbsp; </span>
+            {{> loginButtons align="right"}}
+        </span>
         <h2 class="noMargin">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Square-n.svg/45px-Square-n.svg.png">
-            <span class="">NanoScope</span>
+            <img class="verticalMiddle" src="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png" height="70">
+            <i>Nanoscope</i>
         </h2>
         <small>
-            NanoScope is a social news aggregator. Users submit links and vote on them.
-            The popular links bubble to the top; the rest just fade away.
-            NanoScope is open source, available under <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+            <br>
+            <i>Nanoscope</i> is social news aggregator. Users, just like you, submit and vote on links.
+            The most popular links bubble to the top of this page; while the rest quitely fade away into oblivion.
         </small>
     </header>
     <br>
     {{#if currentUser}}
-        <form id="newPost" class="pure-form pure-form-stacked">
+        <form id="addPost" class="">
             Submit a new link:
-            <input name="title" placeholder="Title" class="pure-input-1" required>
-            <input name="url" placeholder="URL" class="pure-input-1" required>
-            <button class="pure-button small">Submit!</button>
+            <input name="title" placeholder="Title" class="form-control input-sm" required>
+            <input name="url" placeholder="URL" class="form-control input-sm" required>
+            {{#if currentUserIsAdmin}}
+                <input name="aliasname" placeholder="Alias (optional)" class="form-control input-sm">
+            {{/if}}
+            <button class="btn btn-default btn-sm">Submit!</button>
         </form>
     {{else}}
         Sign in to submit a new link.
     {{/if}}
     <br><br>
-    <table class="pure-table pure-table-horizontal pure-table-striped fullWidth">
+    <table class="table table-striped">
         <tbody>
             {{#each posts}}
                 {{> post}}
             {{/each}}
         </tbody>
     </table>
-    <br>
     <footer class="small gray centerText">
         <hr>
         &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
-        NanoScope is available under <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+        <i>Nanoscope</i> is
+        <a class="gray" href="https://github.com/sumukhbarve/Nanoscope">open source</a>,
+        available under
+        <a class="gray" href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
     </footer>
 </body>
 
 <template name="post">
     <tr>
-        <td>
-            <button id="downvote" class="pure-button{{#if hasDownvoted}} voted{{/if}}">&or;</button>
+        <td class="centerText">
+            <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">
+                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+            </button><br>
+            {{netscore}}<br>
+            <button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">
+                <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+            </button>
+            <!--<button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">&or;</button>
             {{netscore}}
-            <button id="upvote" class="pure-button{{#if hasUpvoted}} voted{{/if}}">&and;</button>
+            <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">&and;</button>-->
         </td>
         <td>
-            <h3 class="inline noMargin"><a href="{{url}}">{{title}}</a></h3>
-            <small>{{domain}}</small><br>
+            <h4 class="inline noMargin"><a href="{{url}}" rel="nofollow">{{title}}</a></h4>
+            <small>({{domain}})</small><br>
             <small>Submitted by {{authorname}}, {{fromNow}}.</small>
         </td>
     </tr>

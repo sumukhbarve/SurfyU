@@ -1,20 +1,20 @@
 @import url(https://fonts.googleapis.com/css?family=Raleway);
 
-html, button, input, select, textarea,
-.pure-g [class *= "pure-u"] {
-    /* Set your content font stack here: */
+html, button, input, select, textarea {
     font-family: "Raleway", sans-serif;
 }
 
 html {
-    background-image: url("http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/light_toast.png");
+    background-color: lightSkyBlue;
+    background-image: url("http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/grey_wash_wall.png");
+    /*background-image: url("http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/light_toast.png");*/
 }
 body {
     background-color: white;
     max-width: 600px;
     margin: 0.5em auto;
     padding: 1em;
-    border-radius: 2px;
+    border-radius: 4px;
 }
 small {
     color: gray;
@@ -22,24 +22,16 @@ small {
 a {
     color: mediumBlue;
 }
+a.gray {
+    color: gray;
+}
 input {
     font-size: small;
 }
-#upvote, #downvote {
-    font-size: x-small;
-    color: white;
-    border-color: black;
-    font-weight: bold;
-}
 #upvote.voted, #downvote.voted {
-    background-color: deepSkyBlue;
+    background-color: lightSkyBlue;
 }
-#upvote {
-    background-color: green;
-}
-#downvote {
-    background-color: red;
-}
+
 .small {
     font-size: small;
 }
@@ -60,4 +52,7 @@ input {
 }
 .centerText {
     text-align: center;
+}
+.verticalMiddle {
+    vertical-align: middle;
 }
