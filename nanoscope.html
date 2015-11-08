@@ -2,6 +2,7 @@
     <link rel="icon" href="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nanoscope</title>
+    <meta name="description" content="Nanoscope is a social news hub, where users submit and vote on links. The popular links get showcased."
 </head>
 
 <body class="container">
@@ -14,11 +15,11 @@
             <img class="verticalMiddle" src="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png" height="70">
             <i>Nanoscope</i>
         </h2>
-        <small>
-            <br>
-            <i>Nanoscope</i> is social news aggregator. Users, just like you, submit and vote on links.
-            The most popular links bubble to the top of this page; while the rest quitely fade away into oblivion.
-        </small>
+        <br>
+        <span class="small gray">
+            <i>Nanoscope</i> is a social news hub. Users submit links and other users vote on them.
+            The popular links bubble to the top, the rest quietly fade away.
+        </span>
     </header>
     <br>
     {{#if currentUser}}
@@ -34,7 +35,16 @@
     {{else}}
         Sign in to submit a new link.
     {{/if}}
-    <br><br>
+    <br>
+    <div class="form-inline">
+        <span class="small">Sort:</span> &nbsp;
+        <select id="selectSortBy" class="form-control input-sm">
+            <option value="{{HOT}}">Hot</option>
+            <option value="{{NEW}}">New</option>
+            <option value="{{TOP}}">Top</option>
+        </select>
+    </div>
+    <br>
     <table class="table table-striped">
         <tbody>
             {{#each posts}}
@@ -42,14 +52,7 @@
             {{/each}}
         </tbody>
     </table>
-    <footer class="small gray centerText">
-        <hr>
-        &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
-        <i>Nanoscope</i> is
-        <a class="gray" href="https://github.com/sumukhbarve/Nanoscope">open source</a>,
-        available under
-        <a class="gray" href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
-    </footer>
+    {{> footer}}
 </body>
 
 <template name="post">
@@ -58,13 +61,14 @@
             <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">
                 <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
             </button><br>
-            {{netscore}}<br>
+            {{tmp_netscore}}
+            {{#if currentUserIsAdmin}}
+                +<input data-id="{{_id}}" class="bias" value="{{bias}}"> <span>{{bias}}</span>
+            {{/if}}
+            <br>
             <button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">
                 <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
             </button>
-            <!--<button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">&or;</button>
-            {{netscore}}
-            <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">&and;</button>-->
         </td>
         <td>
             <h4 class="inline noMargin"><a href="{{url}}" rel="nofollow">{{title}}</a></h4>
@@ -72,4 +76,15 @@
             <small>Submitted by {{authorname}}, {{fromNow}}.</small>
         </td>
     </tr>
+</template>
+
+<template name="footer">
+    <footer class="small gray centerText">
+        <hr>
+        &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
+        <i>Nanoscope</i> is
+        <a class="gray" href="https://github.com/sumukhbarve/nanoscope">open source</a>,
+        available under
+        <a class="gray" href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.<br>
+    </footer>
 </template>

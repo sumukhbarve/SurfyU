@@ -31,13 +31,15 @@ input {
 #upvote.voted, #downvote.voted {
     background-color: lightSkyBlue;
 }
-
+input.bias {
+    width: 30px;
+}
 .small {
     font-size: small;
 }
-.gray {
-    color: gray;
-}
+.gray { color: gray; }
+.red { color: red; }
+.green { color: green; }
 .floatRight {
     float: right;
 }
