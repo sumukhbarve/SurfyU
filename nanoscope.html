@@ -5,10 +5,128 @@
     <meta name="description" content="Nanoscope is a social news hub, where users submit and vote on links. The popular links get showcased."
 </head>
 
-<body class="container">
+
+<body>
+    <div class="container">
+        {{> header}}
+        {{> tabs}}
+        {{> footer}}
+    </div>
+</body>
+
+<template name="tabs">
+    <div>
+
+      <!-- Nav tabs -->
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#tab_hot" role="tab" data-toggle="tab">Hot</a></li>
+        <li role="presentation"><a href="#tab_new" role="tab" data-toggle="tab">New</a></li>
+        <!--<li role="presentation"><a href="#tab_top" role="tab" data-toggle="tab">Top</a></li>-->
+        <li role="presentation" class="pull-right"><a href="#tab_submit" role="tab" data-toggle="tab">Submit</a></li>
+        <li role="presentation" class="pull-right">
+            <a href="#tab_about" role="tab" data-toggle="tab">
+                <span class="glyphicon glyphicon-info-sign"></span>
+            </a>
+        </li>
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane fade in active" id="tab_hot">{{> tab_hot}}</div>
+        <div role="tabpanel" class="tab-pane fade" id="tab_new">{{> tab_new}}</div>
+        <!--<div role="tabpanel" class="tab-pane fade" id="tab_top">{{> tab_top}}</div>-->
+        <div role="tabpanel" class="tab-pane fade" id="tab_submit">{{> tab_submit}}</div>
+        <div role="tabpanel" class="tab-pane fade" id="tab_about">{{> tab_about}}</div>
+      </div>
+
+    </div>
+</template>
+
+<template name="tab_submit">
+    <br>
+    {{#if currentUser}}
+        <h4>Submit a new post:</h4>
+        <form id="addPost" class="">
+            <input name="title" placeholder="Title" class="form-control" required>
+            <input name="url" placeholder="URL" class="form-control" required>
+            {{#if isAdmin}}
+                <br>
+                <input name="aliasname" placeholder="Alias (username, optional)" class="form-control">
+                <input name="dateStr" placeholder="Date (YYYY-MM-DD, optional)" class="form-control">
+            {{/if}}
+            <br>
+            <button class="btn btn-primary">Submit!</button>
+        </form>
+    {{else}}
+        <h4>Sign in to submit a new post.</h4>
+        <p>
+            To sign in, click "Sign in" to the top right.<br>
+            Then, if you don't have an account, click "Create account".
+        </p>
+    {{/if}}
+</template>
+
+<template name="tab_hot">
+    {{> posts sortBy=HOT}}
+</template>
+
+<template name="tab_new">
+    {{> posts sortBy=NEW}}
+</template>
+
+<template name="tab_top">
+    {{> posts sortBy=TOP}}
+</template>
+
+<template name="posts">
+    {{# each posts}}
+        {{> post}}
+    {{/each}}
+</template>
+
+<template name="post">
+    <br>
+    <div class="row">
+        <div class="col-xs-1 centerText" style="padding: 0;">
+            <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">
+                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+            </button><br>
+            {{netscore}}
+            <br>
+            <button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">
+                <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="col-xs-11" style="padding: 0;">
+            <h4 class="inline noMargin"><a href="{{url}}" rel="nofollow">{{title}}</a></h4>
+            <span class="small">({{domain}})</span><br>
+            {{#if isAdmin}}
+                <samp class="xSmall form-inline pull-right">
+                    &nbsp; &nbsp;
+                    {{lengthscore}} + <input data-id="{{_id}}" class="bias form-control input-sm" value="{{bias}}"> = {{netscore}}
+                </samp>
+            {{/if}}
+            <span class="small gray">
+                Submitted by {{authorname}}, {{fromNow}}.
+                {{#if isAdminOrAuthor}}
+                    <span class="delete gray cursorPointer">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </span>
+                {{/if}}
+            </span>
+        </div>
+        <div class="col-xs-12">
+            {{#if isImageLike}}
+                <img src="{{url}}" class="img-responsive autoMargin" style="max-height: 400px;">
+            {{/if}}
+        </div>
+    </div>
+</template>
+
+<template name="header">
     <header>
         <span class="pull-right">
-            <span class="small gray">{{#if currentUserIsAdmin}}(ADMIN){{/if}} &nbsp; </span>
+            <span class="small gray">{{#if isAdmin}}(ADMIN){{/if}} &nbsp; </span>
             {{> loginButtons align="right"}}
         </span>
         <h2 class="noMargin">
@@ -16,75 +134,42 @@
             <i>Nanoscope</i>
         </h2>
         <br>
-        <span class="small gray">
-            <i>Nanoscope</i> is a social news hub. Users submit links and other users vote on them.
-            The popular links bubble to the top, the rest quietly fade away.
-        </span>
     </header>
-    <br>
-    {{#if currentUser}}
-        <form id="addPost" class="">
-            Submit a new link:
-            <input name="title" placeholder="Title" class="form-control input-sm" required>
-            <input name="url" placeholder="URL" class="form-control input-sm" required>
-            {{#if currentUserIsAdmin}}
-                <input name="aliasname" placeholder="Alias (optional)" class="form-control input-sm">
-            {{/if}}
-            <button class="btn btn-default btn-sm">Submit!</button>
-        </form>
-    {{else}}
-        Sign in to submit a new link.
-    {{/if}}
-    <br>
-    <div class="form-inline">
-        <span class="small">Sort:</span> &nbsp;
-        <select id="selectSortBy" class="form-control input-sm">
-            <option value="{{HOT}}">Hot</option>
-            <option value="{{NEW}}">New</option>
-            <option value="{{TOP}}">Top</option>
-        </select>
-    </div>
-    <br>
-    <table class="table table-striped">
-        <tbody>
-            {{#each posts}}
-                {{> post}}
-            {{/each}}
-        </tbody>
-    </table>
-    {{> footer}}
-</body>
-
-<template name="post">
-    <tr>
-        <td class="centerText">
-            <button id="upvote" class="btn btn-default btn-xs {{#if hasUpvoted}}voted{{/if}}">
-                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-            </button><br>
-            {{tmp_netscore}}
-            {{#if currentUserIsAdmin}}
-                +<input data-id="{{_id}}" class="bias" value="{{bias}}"> <span>{{bias}}</span>
-            {{/if}}
-            <br>
-            <button id="downvote" class="btn btn-default btn-xs {{#if hasDownvoted}}voted{{/if}}">
-                <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
-            </button>
-        </td>
-        <td>
-            <h4 class="inline noMargin"><a href="{{url}}" rel="nofollow">{{title}}</a></h4>
-            <small>({{domain}})</small><br>
-            <small>Submitted by {{authorname}}, {{fromNow}}.</small>
-        </td>
-    </tr>
 </template>
 
 <template name="footer">
     <footer class="small gray centerText">
         <hr>
         &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
-        <i>Nanoscope</i> is
-        <a class="gray" href="https://github.com/sumukhbarve/nanoscope">open source</a>,
-        available under
-        <a class="gray" href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.<br>
     </footer>
+</template>
+
+<template name="tab_about">
+    <br>
+    <h4>What is <i>Nanoscope?</i></h4>
+    <p>    
+        <i>Nanoscope</i> is an social news hub. Users post links and other users vote on them.
+        Via voting, the popular links bubble to the top, and the rest quietly fade away.
+    </p>
+    <br>
+    <h4>Can anyone post to <i>Nanoscope</i>?</h4>
+    <p>
+        <b>YES!</b> &mdash; All you need is an account.
+        To create an account click "Sign in" to the top right; then, click "Create account".
+    </p>
+    <br>
+    <h4>What is a post's score?</h4>
+    <p>
+        A post's score is the difference between upvotes and downvotes.
+        So, if a post has 553 upvotes and 53 downvotes, it's score will be 500.
+    </p>
+    <br>
+    <h4>I heard this was open source. Is it really?</h4>
+    <p>
+        <b>YES!</b> &mdash; Here's the
+        <a href="https://github.com/sumukhbarve/nanoscope">source code</a>,
+        it is licensed under
+        <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+    </p>
+    <br>
 </template>

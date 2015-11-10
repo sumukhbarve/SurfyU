@@ -16,8 +16,8 @@ body {
     padding: 1em;
     border-radius: 4px;
 }
-small {
-    color: gray;
+.container {
+    max-width: 100%;
 }
 a {
     color: mediumBlue;
@@ -31,30 +31,20 @@ input {
 #upvote.voted, #downvote.voted {
     background-color: lightSkyBlue;
 }
-input.bias {
-    width: 30px;
+input.form-control.bias {
+    width: 25px;
+    padding: 0;
+    text-align: center;
 }
-.small {
-    font-size: small;
-}
+.small { font-size: small; }
+.xSmall { font-size: x-small; }
 .gray { color: gray; }
 .red { color: red; }
 .green { color: green; }
-.floatRight {
-    float: right;
-}
-.noMargin {
-    margin: 0;
-}
-.fullWidth {
-    width: 100%;
-}
-.inline {
-    display: inline;
-}
-.centerText {
-    text-align: center;
-}
-.verticalMiddle {
-    vertical-align: middle;
-}
+.noMargin { margin: 0; }
+.autoMargin { margin: auto; }
+.fullWidth { width: 100%; }
+.inline { display: inline; }
+.centerText { text-align: center; }
+.verticalMiddle { vertical-align: middle; }
+.cursorPointer { cursor: pointer; }

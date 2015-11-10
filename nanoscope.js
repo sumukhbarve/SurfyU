@@ -1,7 +1,8 @@
 //////////////////////////////////////////////////////////////////
-// nanoscope: A simple social news aggregator.                  //
+//                                                              //
+// Nanoscope: A social news hub.                                //
 // Copyright (C) 2015 CrispQ Information Technologies Pvt. Ltd. //
-// Created by Sumukh Barve.                                     //
+//                                                              //
 //////////////////////////////////////////////////////////////////
 //
 // CONSTANTS: Note: Un-`var` variables if using multiple files.
@@ -30,7 +31,7 @@ var assert = function (bool, errorMsg, alertMsg) {
     return true;
 };
 var assertLogin = function () {
-    assert(Meteor.userId(), "login-required", "Please login.");
+    return assert(Meteor.userId(), "login-required", "Please login.");
 };
 var log = function (x, base) {
     base = base || Math.E;
@@ -55,17 +56,23 @@ var arrContains = function (arr, elm) {
 };
 var isAdmin = function () {
     var user = Meteor.user();
-    if (!user) { return false; }
-    return arrContains(ADMIN_NAMES, user.username);
+    return user && arrContains(ADMIN_NAMES, user.username);
 };
 var assertAdmin = function () {
-    assert(isAdmin(), "admin-required");
+    return assert(isAdmin(), "admin-required");
+};
+var isAdminOrAuthor = function (post) {
+    var user = Meteor.user();
+    return user && (isAdmin() || post.authorname === user.username);
+};
+var assertAdminOrAuthor = function (post) {
+    return assert(isAdminOrAuthor(post), "admin-or-author-required");
 };
 var isAlias = function (user) {
     return Object.keys(user.services).length === 0;
 };
 var assertAlias = function (user) {
-    assert(isAlias(user), "bad-alias");
+    return assert(isAlias(user), "bad-alias");
 };
 var arrShallowCopy = function (arr) {
     return arr.map(function (x) {return x;});
@@ -80,6 +87,18 @@ var arrRemoveElement = function (arr, elm, count) {
         count -= 1;
     }
 };
+var isValidDateStr = function (dateStr) {
+    if (dateStr === "") {
+        return true;
+        // Empty `dateStr` indicates that current time should be used.
+    }
+    var date = new Date(dateStr);
+    return String(date) !== "Invalid Date";
+};
+var assertValidDateStr = function (dateStr) {
+    return assert(isValidDateStr(dateStr), "invalid-date", "Invalid Date");
+};
+
 if (Meteor.isServer) {
     //
     // PUBLICATION(S):
@@ -96,32 +115,32 @@ if (Meteor.isClient) {
     //
     // SESSION DEFAULTS:
     //
-    Session.set("sortBy", HOT);
+    //  // As of now, there are no session variables.
     //
     // TEMPLATE HELPERS:
     //
-    Template.body.helpers({
+    Template.registerHelper("isAdmin", isAdmin);
+    Template.registerHelper(HOT, HOT);
+    Template.registerHelper(NEW, NEW);
+    Template.registerHelper(TOP, TOP);
+    Template.registerHelper("context", function () {
+        return JSON.stringify(this);
+    });
+    Template.posts.helpers({
         posts: function () {
-            var sortBy = Session.get("sortBy") || HOT;
-                sortSpec = null;
-            if (sortBy === HOT) {
+            var sortSpec = null;
+            if (this.sortBy === HOT) {
                 sortSpec = {hotscore: -1};
-            } else if (sortBy === NEW) {
+            } else if (this.sortBy === NEW) {
                 sortSpec = {createdAt: -1};
             } else {
+                assert (this.sortBy === TOP);
                 sortSpec = {netscore: -1};
             }
             return Posts.find({}, {sort: sortSpec});
-        },
-        HOT: HOT,
-        NEW: NEW,
-        TOP: TOP,
-        currentUserIsAdmin: isAdmin//,
+        }//,
     });
     Template.post.helpers({
-        tmp_netscore: function () { // TODO: Temporary fix, because not all posts have the "netscore" property.
-            return this.netscore || (this.upvoters.length - this.downvoters.length);
-        },
         fromNow: function () {
             return moment(this.createdAt).fromNow();
         },
@@ -138,7 +157,19 @@ if (Meteor.isClient) {
             if (!Meteor.userId()) { return false; }
             return arrContains(this.upvoters, Meteor.user().username);
         },
-        currentUserIsAdmin: isAdmin//,
+        lengthscore: function () {
+            return this.upvoters.length - this.downvoters.length;
+        },
+        isAdminOrAuthor: function () {
+            return isAdminOrAuthor(this);
+        },
+        isImageLike: function () {
+            var url = this.url,
+                exts = [".gif", ".jpg", ".jpeg", ".png", ".tiff", ".tif"];
+            return exts.some(function (ext) {
+                return url.endsWith(ext);
+            });
+        }//,
     });
     //
     // EVENTS:
@@ -148,11 +179,13 @@ if (Meteor.isClient) {
             evt.preventDefault();
             var title = evt.target.title.value,
                 url = evt.target.url.value,
-                aliasname = "";
+                aliasname = "", dateStr = "";
             if (isAdmin()) {
-                aliasname = evt.target.aliasname.value;   
+                aliasname = evt.target.aliasname.value;
+                dateStr = evt.target.dateStr.value;
+                assertValidDateStr(dateStr); // Error thrower
             }
-            Meteor.call("addPost", title, url, aliasname, function (error, result) {
+            Meteor.call("addPost", title, url, aliasname, dateStr, function (error, result) {
                 if (error) {
                     console.log(error);
                     alert("Error: " + error.message);
@@ -160,25 +193,30 @@ if (Meteor.isClient) {
                 }
                 evt.target.title.value = "";
                 evt.target.url.value = "";
-                $("#selectSortBy").val(NEW);
-                Session.set("sortBy", NEW);
+                $("a[href=#tab_new]").tab("show");
             });
-        },
-        "change #selectSortBy": function (evt) {
-            Session.set("sortBy", evt.target.value);
         }//,
     });
     Template.post.events({
         "click #upvote": function () {
+            assertLogin(); // Error thrower, extra-pre-check
             Meteor.call("castVote", UP, this._id);
         },
         "click #downvote": function () {
+            assertLogin(); // Error thrower, extra-pre-check
             Meteor.call("castVote", DOWN, this._id);
         },
         "change .bias": function (evt) {
-            var postId = evt.target.dataset.id,
+            assertAdmin(); // Error thrower, extra-pre-check
+            var postId = this._id,
                 bias = Number(evt.target.value);
             Meteor.call("addBias", postId, bias);
+        },
+        "click .delete": function () {
+            assertAdminOrAuthor(this); // Error thrower, extra-pre-check
+            if (confirm("Are you sure?")) {
+                Meteor.call("deletePost", this._id);
+            }
         }//,
     });
     //
@@ -189,41 +227,78 @@ if (Meteor.isClient) {
     });
 }
 //
+// HELPERS FOR Meteor.methods:
+//
+var getCreationDate = function (dateStr) {
+    assertValidDateStr(dateStr); // Error thrower
+    if (!dateStr) { return new Date(); }
+    return new Date(dateStr);
+};
+updateVoterArrays = function (voteDirection, votername, upvoters, downvoters) {
+    var provoters = null, antivoters = null;
+    if (voteDirection === UP) {
+        provoters = upvoters;
+        antivoters = downvoters;
+    } else {
+        assert(voteDirection === DOWN); // Error thrower
+        provoters = downvoters;
+        antivoters = upvoters;
+    }
+    if (arrContains(provoters, votername)) {
+        // Undo previous vote:
+        arrRemoveElement(provoters, votername, 1);
+    } else if (arrContains(antivoters, votername)) {
+        // Change vote:
+        arrRemoveElement(antivoters, votername, 1);
+        provoters.push(votername);
+    } else {
+        // Fresh vote:
+        provoters.push(votername);
+    }
+};
+//
 // METHODS:
 //
 Meteor.methods({
-    addPost: function (title, url, aliasname) {
+    getAuthorname: function (username, aliasname) {
+        // Helps pick between `username` and `aliasname`.
+        var alias = null;
+        if (!aliasname) {
+            return username;
+        }
+        // ==> Truthy aliasname
+        assertAdmin(); // Error thrower
+        alias = Meteor.users.findOne({username: aliasname});
+        if (!alias) {
+            // ==> Account doesn't exist... create one:
+            Accounts.createUser({username: aliasname});
+        } else {
+            assertAlias(alias); // Error thrower
+            // Ensures that `alias` is indeed an alias.
+        }
+        return aliasname;
+    },
+    addPost: function (title, url, aliasname, dateStr) {
         assertLogin(); // Error thrower
-        var now = new Date(),
-            post = Posts.findOne({url: url}),
-            author = Meteor.user(),
-            authorname = author.username,
-            alias = null;
-        if (post) {
-            throw new Meteor.Error("url-exists");   
-        }
-        if (aliasname) {
+        assertValidDateStr(dateStr);
+        if (aliasname || dateStr) {
             assertAdmin(); // Error thrower
-            alias = Meteor.users.findOne({username: aliasname});
-            if (!alias) {
-                // ==> Account doesn't exist... create one:
-                Accounts.createUser({username: aliasname});
-            } else {
-                assertAlias(alias); // Error thrower
-                // Ensures that `alias` is indeed an alias.
-            }
-            authorname = aliasname;
         }
+        var post = Posts.findOne({url: url}),
+            author = Meteor.user(),
+            authorname = Meteor.call("getAuthorname", author.username, aliasname),
+            createdAt = getCreationDate(dateStr);
+        assert (!post, "url-exists", "URL already exists.");
         Posts.insert({
             title: title,
             url: url,
             authorname: authorname,
-            createdAt: now,
-            upvoters: [],
+            createdAt: createdAt,
+            upvoters: [authorname],
             downvoters: [],
             bias: 0,
-            netscore: 0,
-            hotscore: getHotscore(0, now)
+            netscore: 1,
+            hotscore: getHotscore(1, createdAt)
         });
     },
     castVote: function (direction, postId) {
@@ -234,24 +309,7 @@ Meteor.methods({
             provoters = null, antivoters = null,
             netscore = null, hotscore = null, i = null;
         assert(post, "post-not-found"); // Error thrower
-        if (direction === UP) {
-            provoters = post.upvoters;      // alias
-            antivoters = post.downvoters;   // alias
-        } else {
-            provoters = post.downvoters;    // alias
-            antivoters = post.upvoters;     // alias
-        }
-        if (arrContains(provoters, votername)) {
-            // Undo previous vote:
-            arrRemoveElement(provoters, votername, 1);
-        } else if (arrContains(antivoters, votername)) {
-            // Change vote:
-            arrRemoveElement(antivoters, votername, 1);
-            provoters.push(votername);
-        } else {
-            // Fresh vote:
-            provoters.push(votername);
-        }
+        updateVoterArrays(direction, votername, post.upvoters, post.downvoters);
         netscore = getNetscore(post.upvoters, post.downvoters, post.bias);
         hotscore = getHotscore(netscore, post.createdAt);
         Posts.update(
@@ -279,5 +337,11 @@ Meteor.methods({
                 hotscore: hotscore//,
             }}//,
         );
-    }
+    },
+    deletePost: function (postId) {
+        assertLogin();
+        var post = Posts.findOne({_id: postId});
+        assertAdminOrAuthor(post); // Error thrower
+        Posts.remove({_id: postId});
+    }//,
 });
