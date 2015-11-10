@@ -34,6 +34,14 @@ input.form-control.bias {
     padding: 0;
     text-align: center;
 }
+.youtube {
+    width: 90%;
+    height: 350px;
+    display: block;
+    margin: auto;
+    border: none;
+}
+/** Helpers: **/
 .small { font-size: small; }
 .xSmall { font-size: x-small; }
 .gray { color: gray; }

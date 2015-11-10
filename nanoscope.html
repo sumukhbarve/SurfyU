@@ -133,6 +133,9 @@
             {{#if isImageLike}}
                 <img src="{{url}}" class="img-responsive autoMargin" style="max-height: 400px;">
             {{/if}}
+            {{#if youtubeId}}
+                <iframe class="youtube" src="https://www.youtube.com/embed/{{youtubeId}}" allowfullscreen></iframe>
+            {{/if}}
         </div>
     </div>
 </template>

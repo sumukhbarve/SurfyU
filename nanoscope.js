@@ -18,6 +18,8 @@ var IMAGE_EXTENSIONS = [
     ".tif", ".tiff",
     ".bmp"//,
 ];
+// YT_RE, via http://stackoverflow.com/questions/7693218/youtube-i-d-parsing-for-new-url-formats
+var YT_RE = /^(?:https?:\/\/|\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})(?![\w-])/;
 //
 // COLLECTION(S):
 //
@@ -180,6 +182,10 @@ if (Meteor.isClient) {
             return IMAGE_EXTENSIONS.some(function (ext) {
                 return endswith(url, ext);
             });
+        },
+        youtubeId: function () {
+            var m = this.url.match(YT_RE);
+            if (m) { return m[1]; } else { return false; }
         }//,
     });
     //
