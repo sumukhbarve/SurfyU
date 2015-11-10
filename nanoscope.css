@@ -15,9 +15,7 @@ body {
     margin: 0.5em auto;
     padding: 1em;
     border-radius: 4px;
-}
-.container {
-    max-width: 100%;
+    max-width: 600px;
 }
 a {
     color: mediumBlue;
@@ -43,6 +41,7 @@ input.form-control.bias {
 .green { color: green; }
 .noMargin { margin: 0; }
 .autoMargin { margin: auto; }
+.noPadding { padding: 0; }
 .fullWidth { width: 100%; }
 .inline { display: inline; }
 .centerText { text-align: center; }

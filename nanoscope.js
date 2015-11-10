@@ -11,6 +11,13 @@ var UP = "UP", DOWN = "DOWN";
 var EPOCH = new Date("2005-12-08");
 var ADMIN_NAMES = ["admin", "yoda"]; // HARD-CODED
 var HOT = "HOT", NEW = "NEW", TOP = "TOP";
+var IMAGE_EXTENSIONS = [
+    ".jpg", ".jpeg",
+    ".png",
+    ".gif",
+    ".tif", ".tiff",
+    ".bmp"//,
+];
 //
 // COLLECTION(S):
 //
@@ -98,6 +105,11 @@ var isValidDateStr = function (dateStr) {
 var assertValidDateStr = function (dateStr) {
     return assert(isValidDateStr(dateStr), "invalid-date", "Invalid Date");
 };
+var endswith = function (haystack, needle) {
+    // ECMA 5 doesn't include String.prototype.endsWith
+    var i = haystack.lastIndexOf(needle);
+    return haystack.slice(i) === needle;
+};
 
 if (Meteor.isServer) {
     //
@@ -164,10 +176,9 @@ if (Meteor.isClient) {
             return isAdminOrAuthor(this);
         },
         isImageLike: function () {
-            var url = this.url,
-                exts = [".gif", ".jpg", ".jpeg", ".png", ".tiff", ".tif"];
-            return exts.some(function (ext) {
-                return url.endsWith(ext);
+            var url = this.url;
+            return IMAGE_EXTENSIONS.some(function (ext) {
+                return endswith(url, ext);
             });
         }//,
     });
