@@ -4,6 +4,9 @@
 // Copyright (C) 2015 CrispQ Information Technologies Pvt. Ltd. //
 //                                                              //
 //////////////////////////////////////////////////////////////////
+/* globals Meteor, Template, Mongo, Accounts, moment,
+		Posts
+*/
 //
 // CONSTANTS: Note: Un-`var` variables if using multiple files.
 //
@@ -18,8 +21,9 @@ var IMAGE_EXTENSIONS = [
     ".tif", ".tiff",
     ".bmp"//,
 ];
-// YT_RE, via http://stackoverflow.com/questions/7693218/youtube-i-d-parsing-for-new-url-formats
-var YT_RE = /^(?:https?:\/\/|\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})(?![\w-])/;
+var RE = {}; // Container for regular expressions.
+RE.YOUTUBE = /^(?:https?:\/\/|\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})(?![\w-])/;
+// RE.YOUTUBE, via http://stackoverflow.com/questions/7693218/youtube-i-d-parsing-for-new-url-formats
 //
 // COLLECTION(S):
 //
@@ -31,8 +35,9 @@ Posts = new Mongo.Collection("posts");
 //
 var assert = function (bool, errorMsg, alertMsg) {
     errorMsg = errorMsg || "assertion-failed";
+    alertMsg = alertMsg || errorMsg;
     if (!bool) {
-        if (Meteor.isClient && alertMsg) {
+        if (Meteor.isClient) {
             alert(alertMsg);
         }
         throw new Meteor.Error(errorMsg);
@@ -59,6 +64,7 @@ var getHotscore = function (netscore, createdAt) {
         absX = Math.abs(x),
         z = (absX >= 1) ? absX : 1;
     return log10(z) + (y * t / 45000);
+    // Ranking algorithm, via http://amix.dk/blog/post/19588
 };
 var arrContains = function (arr, elm) {
     return arr.indexOf(elm) !== -1;
@@ -83,36 +89,37 @@ var isAlias = function (user) {
 var assertAlias = function (user) {
     return assert(isAlias(user), "bad-alias");
 };
-var arrShallowCopy = function (arr) {
-    return arr.map(function (x) {return x;});
-};
 var arrRemoveElement = function (arr, elm, count) {
     count = count || arr.length;
     var i = null;
     while (count > 0) {
         i = arr.indexOf(elm);
-        if (i === -1) { break; }
+        if (i === -1) {
+            break;
+        }
+        // ==> FOUND elm
         arr.splice(i, 1);
         count -= 1;
     }
 };
 var isValidDateStr = function (dateStr) {
     if (dateStr === "") {
-        return true;
-        // Empty `dateStr` indicates that current time should be used.
+        return true; // Empty string indicates current time.
     }
     var date = new Date(dateStr);
     return String(date) !== "Invalid Date";
 };
 var assertValidDateStr = function (dateStr) {
-    return assert(isValidDateStr(dateStr), "invalid-date", "Invalid Date");
+    return assert(isValidDateStr(dateStr), "invalid-date");
 };
 var endswith = function (haystack, needle) {
-    // ECMA 5 doesn't include String.prototype.endsWith
+    // ECMA5 doesn't include String.prototype.endsWith
     var i = haystack.lastIndexOf(needle);
-    return haystack.slice(i) === needle;
+    return i !== -1 && haystack.slice(i) === needle;
 };
-
+var startswith = function (haystack, needle) {
+    return haystack.indexOf(needle) === 0;
+};
 if (Meteor.isServer) {
     //
     // PUBLICATION(S):
@@ -127,17 +134,13 @@ if (Meteor.isClient) {
     //
     Meteor.subscribe("posts");
     //
-    // SESSION DEFAULTS:
-    //
-    //  // As of now, there are no session variables.
-    //
     // TEMPLATE HELPERS:
     //
     Template.registerHelper("isAdmin", isAdmin);
     Template.registerHelper(HOT, HOT);
     Template.registerHelper(NEW, NEW);
     Template.registerHelper(TOP, TOP);
-    Template.registerHelper("context", function () {
+    Template.registerHelper("debugContext", function () {
         return JSON.stringify(this);
     });
     Template.posts.helpers({
@@ -161,6 +164,10 @@ if (Meteor.isClient) {
         domain: function () {
             var a = document.createElement("a");
             a.href = this.url;
+            if (startswith(a.hostname, "www.")) {
+                return a.hostname.slice(4);
+            }
+            // Otherwise...
             return a.hostname;
         },
         hasDownvoted: function () {
@@ -184,7 +191,7 @@ if (Meteor.isClient) {
             });
         },
         youtubeId: function () {
-            var m = this.url.match(YT_RE);
+            var m = this.url.match(RE.YOUTUBE);
             if (m) { return m[1]; } else { return false; }
         }//,
     });
@@ -200,7 +207,7 @@ if (Meteor.isClient) {
             if (isAdmin()) {
                 aliasname = evt.target.aliasname.value;
                 dateStr = evt.target.dateStr.value;
-                assertValidDateStr(dateStr); // Error thrower
+                assertValidDateStr(dateStr); // Error thrower, extra-pre-check
             }
             Meteor.call("addPost", title, url, aliasname, dateStr, function (error, result) {
                 if (error) {
@@ -227,6 +234,7 @@ if (Meteor.isClient) {
             assertAdmin(); // Error thrower, extra-pre-check
             var postId = this._id,
                 bias = Number(evt.target.value);
+            assert(!isNaN(bias), "number-required");
             Meteor.call("addBias", postId, bias);
         },
         "click .delete": function () {
@@ -251,7 +259,7 @@ var getCreationDate = function (dateStr) {
     if (!dateStr) { return new Date(); }
     return new Date(dateStr);
 };
-updateVoterArrays = function (voteDirection, votername, upvoters, downvoters) {
+var updateVoterArrays = function (voteDirection, votername, upvoters, downvoters) {
     var provoters = null, antivoters = null;
     if (voteDirection === UP) {
         provoters = upvoters;
@@ -289,7 +297,10 @@ Meteor.methods({
         if (!alias) {
             // ==> Account doesn't exist... create one:
             Accounts.createUser({username: aliasname});
+            // Account creation happens on the server.
+            // That's why this is in Meteor.methods
         } else {
+            // ==> Account exists.
             assertAlias(alias); // Error thrower
             // Ensures that `alias` is indeed an alias.
         }
@@ -297,7 +308,7 @@ Meteor.methods({
     },
     addPost: function (title, url, aliasname, dateStr) {
         assertLogin(); // Error thrower
-        assertValidDateStr(dateStr);
+        assertValidDateStr(dateStr); // Error thrower
         if (aliasname || dateStr) {
             assertAdmin(); // Error thrower
         }
@@ -315,7 +326,7 @@ Meteor.methods({
             downvoters: [],
             bias: 0,
             netscore: 1,
-            hotscore: getHotscore(1, createdAt)
+            hotscore: getHotscore(1, createdAt)//,
         });
     },
     castVote: function (direction, postId) {
@@ -323,8 +334,7 @@ Meteor.methods({
         var voter = Meteor.user(),
             votername = voter.username,
             post = Posts.findOne({_id: postId}),
-            provoters = null, antivoters = null,
-            netscore = null, hotscore = null, i = null;
+            netscore = null, hotscore = null;
         assert(post, "post-not-found"); // Error thrower
         updateVoterArrays(direction, votername, post.upvoters, post.downvoters);
         netscore = getNetscore(post.upvoters, post.downvoters, post.bias);
