@@ -1,4 +1,4 @@
-Nanoscope is a social news hub, inspired by reddit, built with meteor.
+SurfyU was previously known as Nanoscope. It is a social news hub, inspired by reddit, built with meteor.
 
 ### Blog post &mdash; [***Nanoscope: The Inspiration***](http://blog.crispq.com/2015/11/nanoscope-inspiration.html)
 
@@ -13,8 +13,8 @@ Nanoscope is a social news hub, inspired by reddit, built with meteor.
 
 #### Features being worked on:
 ✘ Image Support: Display images, allow uploads. (Partial)  
-✘ Tagging: Users can use #hashtags to label posts.
-✘ Mentions: Users can use @username to call out other users.
+✘ Tagging: Users can use #hashtags to label posts.  
+✘ Mentions: Users can use @username to call out other users.  
 
 
 ### Installation:

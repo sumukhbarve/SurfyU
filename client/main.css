@@ -1,20 +1,20 @@
 @import url(https://fonts.googleapis.com/css?family=Raleway);
 
-html, button, input, select, textarea {
+html, body, button, input, select, textarea {
     font-family: "Raleway", sans-serif;
 }
 
 html {
     background-color: lightSkyBlue;
-    background-image: url("http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/grey_wash_wall.png");
-    /*background-image: url("http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/light_toast.png");*/
+    /*background-image: url("/grey_wash_wall.png");*/
 }
 body {
     background-color: white;
     max-width: 600px;
     margin: 0.5em auto;
     padding: 1em;
-    border-radius: 4px;
+    border-radius: 0.5em;
+    border: 3px solid dodgerBlue;
     max-width: 600px;
 }
 a {
@@ -22,9 +22,6 @@ a {
 }
 a.gray {
     color: gray;
-}
-input {
-    font-size: small;
 }
 #upvote.voted, #downvote.voted {
     background-color: lightSkyBlue;
@@ -41,6 +38,9 @@ input.form-control.bias {
     margin: auto;
     border: none;
 }
+.loading {
+    display: none;
+}
 /** Helpers: **/
 .small { font-size: small; }
 .xSmall { font-size: x-small; }
@@ -49,7 +49,9 @@ input.form-control.bias {
 .green { color: green; }
 .noMargin { margin: 0; }
 .autoMargin { margin: auto; }
+.margin1em { margin: 1em; }
 .noPadding { padding: 0; }
+.padding1em { padding: 1em; }
 .fullWidth { width: 100%; }
 .inline { display: inline; }
 .centerText { text-align: center; }

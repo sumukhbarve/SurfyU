@@ -21,3 +21,5 @@ accounts-password
 momentjs:moment
 twbs:bootstrap
 spiderable
+http
+fortawesome:fontawesome

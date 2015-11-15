@@ -1,8 +1,8 @@
 <head>
-    <link rel="icon" href="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png">
+    <link rel="icon" href="/surferpanda-w48.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nanoscope</title>
-    <meta name="description" content="Nanoscope is a social news hub, where users submit and vote on links. The popular links get showcased."
+    <title>SurfyU ~ Surf, vote, chill.</title>
+    <meta name="description" content="SurfyU is a social web surfing hub, where users submit and vote on links.">
 </head>
 
 
@@ -60,14 +60,18 @@
         <h4>Submit a new post:</h4>
         <form id="addPost" class="">
             <textarea name="title" placeholder="Title" class="form-control" required></textarea>
-            <input name="url" placeholder="URL" class="form-control" required>
+            <input name="url" id="postimage_url" placeholder="URL" class="form-control" required>
+            <img id="imgPreview" src="" alt="Loading image preview..." class="img-responsive" style="display: none; margin: 0.5em auto;">
             {{#if isAdmin}}
                 <br>
                 <input name="aliasname" placeholder="Alias (username, optional)" class="form-control">
                 <input name="dateStr" placeholder="Date (YYYY-MM-DD, optional)" class="form-control">
             {{/if}}
             <br>
-            <button class="btn btn-primary">Submit!</button>
+            <button id="btnAddPost" class="btn btn-primary">
+                <span class="loading"><i class="fa fa-circle-o-notch fa-spin"></i></span> Submit!
+            </button>
+            <span class="btn btn-default btn-sm pull-right" onclick="postimage_upload();">Upload Image</span>
         </form>
     {{else}}
         <h4>Sign in to submit a new post.</h4>
@@ -111,7 +115,7 @@
         </div>
         <div class="col-xs-11 noPadding">
             <div style="padding-left: 20px;">
-                <h4 class="inline noMargin"><a href="{{url}}" rel="nofollow">{{title}}</a></h4>
+                <h4 class="inline noMargin"><a href="{{url}}" target="_blank" rel="nofollow">{{title}}</a></h4>
                 <span class="small gray">({{domain}})</span><br>
                 {{#if isAdmin}}
                     <samp class="xSmall form-inline pull-right">
@@ -130,11 +134,16 @@
             </div>
         </div>
         <div class="col-xs-12">
-            {{#if isImageLike}}
-                <img src="{{url}}" class="img-responsive autoMargin" style="max-height: 400px;">
-            {{/if}}
             {{#if youtubeId}}
                 <iframe class="youtube" src="https://www.youtube.com/embed/{{youtubeId}}" allowfullscreen></iframe>
+            {{else}}
+                {{#if thumbnailUrl}}
+                    <img src="{{thumbnailUrl}}" class="img-responsive autoMargin" style="max-height: 400px;">
+                {{else}}
+                    {{#if isImageLike}}
+                        <img src="{{url}}" class="img-responsive autoMargin" style="max-height: 400px;">
+                    {{/if}}
+                {{/if}}
             {{/if}}
         </div>
     </div>
@@ -147,8 +156,8 @@
             {{> loginButtons align="right"}}
         </span>
         <h2 class="noMargin">
-            <img class="verticalMiddle" src="http://s13.postimg.org/8lx1tgzdf/nanoscope_square_100_0.png" height="70">
-            <i>Nanoscope</i>
+            <img class="verticalMiddle" src="{{config.lib.LOGO_SRC}}" height="80">
+            <span>{{config.lib.TITLE}} <small class="hidden-xs verticalMiddle">{{config.lib.TAGLINE}}</small></span>
         </h2>
         <br>
     </header>
@@ -163,13 +172,13 @@
 
 <template name="tab_about">
     <br>
-    <h4>What is <i>Nanoscope?</i></h4>
+    <h4>What's {{config.lib.TITLE}}?</h4>
     <p>    
-        <i>Nanoscope</i> is an social news hub. Users post links and other users vote on them.
+        {{config.lib.TITLE}} is an social web-surfing hub. Users post links and other users vote on them.
         Via voting, the popular links bubble to the top, and the rest quietly fade away.
     </p>
     <br>
-    <h4>Can anyone post to <i>Nanoscope</i>?</h4>
+    <h4>Can anyone post links?</h4>
     <p>
         <b>YES!</b> &mdash; All you need is an account.
         To create an account click "Sign in" to the top right; then, click "Create account".
