@@ -1,9 +1,15 @@
 // Copyright (C) 2015 CrispQ Information Technologies Pvt. Ltd.
 
 //
+// SESSION VARIABLE(S) (INIT):
+//
+Session.set("postsLoaded", false);
+//
 // SUBSCRIPTION(S):
 //
-Meteor.subscribe("posts");
+Meteor.subscribe("posts", function () {
+    Session.set("postsLoaded", true);
+});
 //
 // TEMPLATE HELPERS:
 //
@@ -12,6 +18,9 @@ Template.registerHelper("isAdmin", isAdmin);
 Template.registerHelper(HOT, HOT);
 Template.registerHelper(NEW, NEW);
 Template.registerHelper(TOP, TOP);
+Template.registerHelper("postsLoaded", function () {
+    return Session.get("postsLoaded");
+});
 Template.registerHelper("debugContext", function () {
     return JSON.stringify(this);
 });

@@ -61,16 +61,15 @@
         <form id="addPost" class="">
             <textarea name="title" placeholder="Title" class="form-control" required></textarea>
             <input name="url" id="postimage_url" placeholder="URL" class="form-control" required>
-            <img id="imgPreview" src="" alt="Loading image preview..." class="img-responsive" style="display: none; margin: 0.5em auto;">
+            <img id="imgPreview" src="" alt="Loading image preview..." class="img-responsive img-thumbnail"
+                style="display: none; margin: 0.5em auto;">
             {{#if isAdmin}}
                 <br>
                 <input name="aliasname" placeholder="Alias (username, optional)" class="form-control">
                 <input name="dateStr" placeholder="Date (YYYY-MM-DD, optional)" class="form-control">
             {{/if}}
             <br>
-            <button id="btnAddPost" class="btn btn-primary">
-                <span class="loading"><i class="fa fa-circle-o-notch fa-spin"></i></span> Submit!
-            </button>
+            <button id="btnAddPost" class="btn btn-primary">Submit!</button>
             <span class="btn btn-default btn-sm pull-right" onclick="postimage_upload();">Upload Image</span>
         </form>
     {{else}}
@@ -82,16 +81,24 @@
     {{/if}}
 </template>
 
+<template name="mkTab">
+    {{#if postsLoaded}}
+        {{> posts sortBy=sortBy}}
+    {{else}}
+        {{> loading}}
+    {{/if}}
+</template>
+
 <template name="tab_hot">
-    {{> posts sortBy=HOT}}
+    {{> mkTab sortBy=HOT}}
 </template>
 
 <template name="tab_new">
-    {{> posts sortBy=NEW}}
+    {{> mkTab sortBy=NEW}}
 </template>
 
 <template name="tab_top">
-    {{> posts sortBy=TOP}}
+    {{> mkTab sortBy=TOP}}
 </template>
 
 <template name="posts">
@@ -116,7 +123,7 @@
         <div class="col-xs-11 noPadding">
             <div style="padding-left: 20px;">
                 <h4 class="inline noMargin"><a href="{{url}}" target="_blank" rel="nofollow">{{title}}</a></h4>
-                <span class="small gray">({{domain}})</span><br>
+                <span class="small gray"> &nbsp; {{domain}}</span><br>
                 {{#if isAdmin}}
                     <samp class="xSmall form-inline pull-right">
                         &nbsp; &nbsp;
@@ -138,10 +145,10 @@
                 <iframe class="youtube" src="https://www.youtube.com/embed/{{youtubeId}}" allowfullscreen></iframe>
             {{else}}
                 {{#if thumbnailUrl}}
-                    <img src="{{thumbnailUrl}}" class="img-responsive autoMargin" style="max-height: 400px;">
+                    <img src="{{thumbnailUrl}}" class="img-responsive img-thumbnail autoMargin previewThumbnail">
                 {{else}}
                     {{#if isImageLike}}
-                        <img src="{{url}}" class="img-responsive autoMargin" style="max-height: 400px;">
+                        <img src="{{url}}" class="img-responsive img-thumbnail autoMargin previewThumbnail">
                     {{/if}}
                 {{/if}}
             {{/if}}
@@ -166,6 +173,9 @@
 <template name="footer">
     <footer class="small gray centerText">
         <hr>
+        Created by <a href="https://www.jotflow.com/@Sumukh-Barve/414868048661059">Sumukh Barve</a>,
+            licensed under <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
+        <br>
         &copy; 2015, CrispQ Information Technologies Pvt. Ltd.<br>
     </footer>
 </template>
@@ -197,5 +207,12 @@
         it is licensed under
         <a href="http://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a>.
     </p>
+    <br>
+</template>
+
+<template name="loading">
+    <br>
+    <img src="/ripple.gif" class="img-responsive autoMargin">
+    <center>{{randomLoadingMessage}}</center>
     <br>
 </template>
